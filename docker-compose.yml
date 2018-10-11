@@ -1,0 +1,24 @@
+version: '3'
+services:
+  pokedex_redis:
+    container_name: pokedex_redis
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  pokedex_api:
+    container_name: pokedex_api
+    environment:
+      - REDIS_URL=redis://pokedex_redis:6379
+    # built locally with: docker build -t pokedex .
+    image: pokedex
+    volumes:
+      - .:/app
+    ports:
+      - "9292:9292"
+    links:
+      - pokedex_redis
+    depends_on:
+      - pokedex_redis
+    restart: always
