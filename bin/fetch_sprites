@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'fileutils'
+
+pokemon = JSON.parse(File.read('api/v2/pokemon/index.json'))['results']
+
+pokemon.each do |p|
+  name = p['name']
+  sprites = JSON.parse( File.read( File.join(p['url'].sub( "/", ''), 'index.json' ) ) )['sprites']
+  sprites.each do |k,v|
+    next unless v
+    FileUtils.mkdir_p("images/sprites/#{name}")
+    filename = File.join('images/sprites', name, "#{k}.png")
+    `curl #{v} -o #{filename}`
+  end
+end

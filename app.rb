@@ -25,6 +25,10 @@ class App < Sinatra::Base
     end
   end
 
+  get '/pokemon/sprites/:name/:file' do
+    send_file(File.join('images/sprites/', params[:name], params[:file]), :disposition => 'inline')
+  end
+
   private
 
   def pokemon_not_found(key)
