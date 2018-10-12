@@ -1,7 +1,13 @@
 require 'sinatra/base'
 require 'json'
+require 'redis'
 
 class App < Sinatra::Base
+  before do
+    headers['Access-Control-Allow-Methods'] = 'GET'
+    headers['Access-Control-Allow-Origin'] = '*'
+  end
+
   get '/pokemon' do
     pokemon_index.to_json
   end
@@ -11,11 +17,11 @@ class App < Sinatra::Base
     if params[:key].match(/(\d+)/)
       target = pokemon_index.find { |pokemon| pokemon['id'] == params[:key].match(/(\d+)/)[1] }
       return pokemon_not_found(params[:key]) unless target
-      File.read("api/v2/pokemon/#{params[:key].match(/(\d+)/)[1]}/index.json")
+      cache_data("api/v2/pokemon/#{params[:key].match(/(\d+)/)[1]}/index.json")
     else
       target = pokemon_index.find { |pokemon| pokemon['name'] == params[:key] }
       return pokemon_not_found(params[:key]) unless target
-      File.read(File.join(target['url'].sub("/", ''), 'index.json'))
+      cache_data(File.join(target['url'].sub("/", ''), 'index.json'))
     end
   end
 
@@ -30,9 +36,26 @@ class App < Sinatra::Base
   end
 
   def generate_index
-    data = JSON.parse(File.read('api/v2/pokemon/index.json'))
+    # Could be handled better
+    data = JSON.parse(cache_data('api/v2/pokemon/index.json'))
     data['results'].each do |pokemon|
       pokemon['id'] = pokemon['url'].match(/\/api\/v2\/pokemon\/(\d+)/)[1]
     end
+  end
+
+  def cache_data(key)
+    data = redis.get(key)
+
+    unless data
+      value = File.read(key)
+      redis.set(key, value)
+      data = value
+    end
+
+    data
+  end
+
+  def redis
+    @redis ||= Redis.new
   end
 end
