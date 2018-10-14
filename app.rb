@@ -44,6 +44,7 @@ class App < Sinatra::Base
     data = JSON.parse(cache_data('api/v2/pokemon/index.json'))
     data['results'].each do |pokemon|
       pokemon['id'] = pokemon['url'].match(/\/api\/v2\/pokemon\/(\d+)/)[1]
+      pokemon['image'] = "http://127.0.0.1:9292/pokemon/sprites/#{pokemon['name']}/front_default.png"
     end
   end
 
